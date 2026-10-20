@@ -1,0 +1,22 @@
+{
+  "sorts": [
+    {
+      "prompt": "Put each topic into the group where you'd expect to find it on our help centre. Add your own group if none of them fit.",
+      "mode": "hybrid",
+      "cards": [
+        "Track my parcel",
+        "Change my delivery address",
+        "Returns policy",
+        "Start a return",
+        "Gift cards",
+        "Change my password",
+        "Payment methods",
+        "Delivery costs",
+        "Size guide",
+        "Contact us"
+      ],
+      "categories": ["Orders and delivery", "Returns", "My account", "Help"]
+    }
+  ],
+  "shuffleCards": true
+}

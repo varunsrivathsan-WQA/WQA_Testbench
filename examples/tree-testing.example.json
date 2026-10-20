@@ -1,0 +1,19 @@
+{
+  "tree": {
+    "Shop": {
+      "Kitchen": ["Pans", "Knives", "Storage"],
+      "Garden": ["Tools", "Seeds", "Furniture"]
+    },
+    "Offers": ["This week", "Clearance"],
+    "Help": {
+      "Orders": ["Track an order", "Change an order"],
+      "Returns": ["Start a return", "Returns policy"],
+      "Contact us": ["Live chat", "Email"]
+    }
+  },
+  "tasks": [
+    { "scenario": "Your new frying pan arrived damaged. Where would you go to send it back?", "accepted": [["Help", "Returns", "Start a return"]] },
+    { "scenario": "You want to see what's discounted this week.", "accepted": [["Offers", "This week"]] }
+  ],
+  "successBacktrackTolerance": 0
+}
