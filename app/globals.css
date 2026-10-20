@@ -179,3 +179,13 @@ table.t .title-cell a { color: var(--ink); font-weight: 600; }
 details > summary { cursor: pointer; }
 pre.json { margin: 8px 0 0; background: var(--surface-alt); border: 1px solid var(--hairline); border-radius: var(--radius-sm); padding: 12px; font-size: 12px; max-height: 360px; overflow: auto; white-space: pre-wrap; word-break: break-word; }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+/* ---------- Email tags ---------- */
+.tags { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; min-height: 44px; padding: 6px 8px; background: var(--surface); border: 1px solid var(--hairline-strong); border-radius: var(--radius-sm); cursor: text; }
+.tags:focus-within { outline: 2px solid var(--accent); outline-offset: -1px; border-color: transparent; }
+.tag { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; padding: 4px 6px 4px 10px; border-radius: 980px; background: var(--surface-alt); border: 1px solid var(--hairline); color: var(--ink); max-width: 100%; overflow-wrap: anywhere; }
+.tag button { font: inherit; font-size: 15px; line-height: 1; border: 0; background: none; color: var(--gray); cursor: pointer; padding: 0 4px; border-radius: 50%; }
+.tag button:hover { color: var(--ink); }
+.tags-input { flex: 1; min-width: 160px; border: 0; outline: none; background: none; font: inherit; font-size: 15px; color: var(--ink); padding: 4px 2px; }
+.tag-list { display: flex; flex-wrap: wrap; gap: 6px; }
+.field small.error, small.error { color: var(--danger); }

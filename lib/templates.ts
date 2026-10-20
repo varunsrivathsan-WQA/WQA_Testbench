@@ -1,4 +1,4 @@
-import { UserError } from "./config";
+import { ALLOWED_DOMAINS, UserError } from "./config";
 import { randomId } from "./crypto";
 import { deleteFiles, getTemplate, Person, saveTemplate, storeFiles, Template } from "./model";
 import { normalise } from "./package";
@@ -16,6 +16,14 @@ export type TemplateInput = {
 function list(v: string[] | string | undefined) {
   const arr = Array.isArray(v) ? v : (v || "").split(/[\s,]+/);
   return arr.map((s) => String(s).trim()).filter(Boolean);
+}
+
+/** Editors must be people who can sign in, so only allowed-domain emails. */
+function editorList(v: string[] | string | undefined) {
+  const emails = list(v).map((e) => e.toLowerCase());
+  const bad = emails.filter((e) => !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e) || !ALLOWED_DOMAINS.includes(e.split("@")[1]));
+  if (bad.length) throw new UserError(`Editors must be ${ALLOWED_DOMAINS.map((d) => "@" + d).join(" or ")} addresses. Remove: ${bad.join(", ")}.`);
+  return [...new Set(emails)];
 }
 
 function parseExample(v: unknown) {
@@ -40,7 +48,7 @@ export async function createTemplate(user: Person, input: TemplateInput) {
     id, name,
     description: (input.description || "").trim().slice(0, 600),
     owner: user,
-    editors: list(input.editors).map((e) => e.toLowerCase()),
+    editors: editorList(input.editors),
     files, entry: pkg.entry, version: 1,
     requiredKeys: list(input.requiredKeys),
     example: parseExample(input.example),
@@ -54,7 +62,7 @@ export async function updateTemplate(t: Template, user: Person, input: TemplateI
   const next: Template = { ...t, updatedAt: Date.now(), updatedBy: user };
   if (input.name !== undefined) next.name = input.name.trim().slice(0, 80) || t.name;
   if (input.description !== undefined) next.description = input.description.trim().slice(0, 600);
-  if (input.editors !== undefined) next.editors = list(input.editors).map((e) => e.toLowerCase());
+  if (input.editors !== undefined) next.editors = editorList(input.editors);
   if (input.requiredKeys !== undefined) next.requiredKeys = list(input.requiredKeys);
   if (input.example !== undefined) next.example = parseExample(input.example);
   if (input.packageRef) {

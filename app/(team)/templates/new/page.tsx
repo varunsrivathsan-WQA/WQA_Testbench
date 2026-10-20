@@ -1,4 +1,4 @@
-import { storageMode } from "@/lib/config";
+import { ALLOWED_DOMAINS, storageMode } from "@/lib/config";
 import TemplateForm from "@/components/TemplateForm";
 
 export const metadata = { title: "Add a template" };
@@ -14,7 +14,7 @@ export default function NewTemplate() {
           <code>window.claude.use(&quot;db&quot;)</code>, like the WQA card sort and tree test.
         </p>
       </div>
-      <TemplateForm mode={storageMode} />
+      <TemplateForm mode={storageMode} domains={ALLOWED_DOMAINS} />
     </main>
   );
 }

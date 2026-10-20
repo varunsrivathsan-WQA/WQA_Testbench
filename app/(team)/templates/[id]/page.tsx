@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { currentUser } from "@/lib/auth";
-import { storageMode } from "@/lib/config";
+import { ALLOWED_DOMAINS, storageMode } from "@/lib/config";
 import { fmtBytes, fmtDate } from "@/lib/format";
 import { canEditTemplate, getTemplate } from "@/lib/model";
 import TemplateForm from "@/components/TemplateForm";
@@ -36,7 +36,14 @@ export default async function TemplatePage({ params }: { params: Promise<{ id: s
 
       <div className="grid-3">
         <div className="stat"><span>Owner</span><p className="h3">{t.owner.name}</p></div>
-        <div className="stat"><span>Editors</span><p className="h3">{t.editors.length ? t.editors.join(", ") : "Owner only"}</p></div>
+        <div className="stat stack" style={{ gap: 8 }}>
+          <span>Editors</span>
+          {t.editors.length ? (
+            <div className="tag-list">{t.editors.map((e) => <span key={e} className="tag" style={{ paddingRight: 10 }}>{e}</span>)}</div>
+          ) : (
+            <p className="h3">Owner only</p>
+          )}
+        </div>
         <div className="stat"><span>Updated</span><p className="h3">{fmtDate(t.updatedAt)}</p></div>
       </div>
 
@@ -74,7 +81,8 @@ export default async function TemplatePage({ params }: { params: Promise<{ id: s
           </div>
           <TemplateForm
             mode={storageMode}
-            existing={{ id: t.id, name: t.name, description: t.description, editors: t.editors.join(", "), requiredKeys: t.requiredKeys.join(", "), example: example || "" }}
+            domains={ALLOWED_DOMAINS}
+            existing={{ id: t.id, name: t.name, description: t.description, editors: t.editors, requiredKeys: t.requiredKeys.join(", "), example: example || "" }}
           />
         </section>
       ) : (

@@ -3,17 +3,18 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import DropZone from "./DropZone";
+import EmailTags from "./EmailTags";
 import { api, Picked, uploadPicked } from "./upload-client";
 
-type Existing = { id: string; name: string; description: string; editors: string; requiredKeys: string; example: string };
+type Existing = { id: string; name: string; description: string; editors: string[]; requiredKeys: string; example: string };
 
-export default function TemplateForm({ mode, existing }: { mode: "cloud" | "local"; existing?: Existing }) {
+export default function TemplateForm({ mode, existing, domains }: { mode: "cloud" | "local"; existing?: Existing; domains: string[] }) {
   const router = useRouter();
   const [picked, setPicked] = useState<Picked>([]);
   const [name, setName] = useState(existing?.name || "");
   const [description, setDescription] = useState(existing?.description || "");
   const [requiredKeys, setRequiredKeys] = useState(existing?.requiredKeys || "");
-  const [editors, setEditors] = useState(existing?.editors || "");
+  const [editors, setEditors] = useState<string[]>(existing?.editors || []);
   const [example, setExample] = useState(existing?.example || "");
   const [examplePicked, setExamplePicked] = useState<Picked>([]);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -87,11 +88,11 @@ export default function TemplateForm({ mode, existing }: { mode: "cloud" | "loca
         <span>Description</span>
         <input id="tpl-desc" className="input" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Open, closed or hybrid card sort, run by a moderator." />
       </label>
-      <label className="field">
-        <span>Editors</span>
-        <input id="tpl-editors" className="input" value={editors} onChange={(e) => setEditors(e.target.value)} placeholder="anthony@wearewqa.com, elliot@wearewqa.com" />
-        <small>People besides you who can change or delete this template. Everyone can use it.</small>
-      </label>
+      <div className="field">
+        <label htmlFor="tpl-editors" style={{ fontSize: 13, fontWeight: 600, color: "var(--ink-soft)" }}>Editors</label>
+        <EmailTags id="tpl-editors" value={editors} onChange={setEditors} domains={domains} placeholder={`name@${domains[0]}, then press Enter`} />
+        <small>People besides you who can change or delete this template. Everyone at WQA can use it.</small>
+      </div>
       <div className="field">
         <span>Example JSON</span>
         <DropZone picked={examplePicked} onPick={onExample} title="Drop an example JSON file" accept=".json,application/json" folders={false} />
