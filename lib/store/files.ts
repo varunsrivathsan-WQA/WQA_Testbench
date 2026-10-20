@@ -1,7 +1,7 @@
-import { put, del } from "@vercel/blob";
+import { put, del, get } from "@vercel/blob";
 import fs from "node:fs";
 import path from "node:path";
-import { storageMode, UserError } from "../config";
+import { BLOB_ACCESS, storageMode, UserError } from "../config";
 
 /** Stores file bytes. `ref` is what you keep to read the file back. */
 export interface FileStore {
@@ -16,7 +16,7 @@ function blob(): FileStore {
   return {
     async put(key, data, contentType) {
       const res = await put(key, Buffer.from(data), {
-        access: "public",
+        access: BLOB_ACCESS,
         contentType,
         addRandomSuffix: true,
       });
@@ -24,9 +24,15 @@ function blob(): FileStore {
     },
     async get(ref) {
       if (!BLOB_HOST.test(ref)) return null;
-      const res = await fetch(ref, { cache: "no-store" });
-      if (!res.ok) return null;
-      return new Uint8Array(await res.arrayBuffer());
+      if (BLOB_ACCESS === "public") {
+        const res = await fetch(ref, { cache: "no-store" });
+        if (!res.ok) return null;
+        return new Uint8Array(await res.arrayBuffer());
+      }
+      // Private store: the SDK reads with the store's token.
+      const res = await get(ref, { access: "private", useCache: false });
+      if (!res || res.statusCode !== 200) return null;
+      return new Uint8Array(await new Response(res.stream).arrayBuffer());
     },
     async del(refs) {
       const urls = refs.filter((r) => BLOB_HOST.test(r));

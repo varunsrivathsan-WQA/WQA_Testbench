@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { BLOB_ACCESS } from "@/lib/config";
 
 export const metadata: Metadata = {
   title: { default: "WQA Testbench", template: "%s · WQA Testbench" },
@@ -11,7 +12,7 @@ export const viewport: Viewport = { width: "device-width", initialScale: 1, view
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en-GB">
+    <html lang="en-GB" data-blob-access={BLOB_ACCESS}>
       <body>{children}</body>
     </html>
   );

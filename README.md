@@ -53,7 +53,7 @@ Each drop takes its own copy of the template, so editing a template never change
 
 1. **Push this folder to a GitHub repo** and import it in Vercel (New Project). The framework preset is Next.js; no build settings to change.
 2. **Add storage.** In the project: Storage →
-   - **Blob** → Create. This adds `BLOB_READ_WRITE_TOKEN`.
+   - **Blob** → Create, region **London (lhr1)** or another EU region, Access **Private**, and tick **Add a read-write token env var**. This adds `BLOB_READ_WRITE_TOKEN`.
    - **Upstash for Redis** (Marketplace) → Create, region **eu-west** (London or Ireland). This adds `KV_REST_API_URL` and `KV_REST_API_TOKEN`.
 3. **Create a Google OAuth client** in Google Cloud Console → APIs & Services → Credentials → Create OAuth client ID → Web application.
    - Authorised redirect URI: `https://<your-domain>/api/auth/callback/google`
@@ -106,7 +106,7 @@ API requests are capped at 4 MB (a Vercel limit). Bigger uploads go through the 
 - **File URLs expire.** The `<token>` part is signed and lasts 12 hours, and it stops working when the drop ends or gets a new version.
 - **Nothing is indexed.** `noindex` headers on every response; link previews show no title for password-protected drops.
 - **Passwords** are hashed with scrypt. The unlock cookie is signed, HTTP-only, and expires with the drop.
-- **Blob storage**: files sit in Vercel Blob under random, unguessable URLs that are never shown to visitors (the app streams them). Anyone given a raw Blob URL could still fetch it until the drop ends, so don't paste those URLs anywhere.
+- **Blob storage**: files sit in a **private** Vercel Blob store. Only the app, using the store's token, can read them; visitors only ever get files through the app. (Set `BLOB_ACCESS=public` only if your store was created as public.)
 - **Before client data goes on it**, run artifact 5 from the problem definition (the security and confidentiality check) against this setup.
 
 ## Code map

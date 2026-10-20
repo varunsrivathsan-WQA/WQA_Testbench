@@ -70,7 +70,8 @@ export async function uploadPicked(p: Picked, mode: "cloud" | "local"): Promise<
   }
   const blob = new Blob([zip as BlobPart], { type: "application/zip" });
   if (mode === "cloud") {
-    const res = await upload(`packages/${Date.now()}.zip`, blob, { access: "public", handleUploadUrl: "/api/upload", contentType: "application/zip" });
+    const access = document.documentElement.dataset.blobAccess === "public" ? "public" : "private";
+    const res = await upload(`packages/${Date.now()}.zip`, blob, { access, handleUploadUrl: "/api/upload", contentType: "application/zip" });
     return res.url;
   }
   const res = await fetch("/api/upload/local", { method: "PUT", body: blob });

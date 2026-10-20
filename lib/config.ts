@@ -19,6 +19,9 @@ export const hasGoogle = !!(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET);
 /** Email-only sign in, for running locally without Google set up. Never in production. */
 export const devLogin = !isProd && !hasGoogle;
 
+/** Must match the Blob store's access setting in Vercel. Private is the default and the safer choice. */
+export const BLOB_ACCESS: "private" | "public" = env.BLOB_ACCESS === "public" ? "public" : "private";
+
 export const storageMode: "cloud" | "local" =
   env.BLOB_READ_WRITE_TOKEN && (env.KV_REST_API_URL || env.UPSTASH_REDIS_REST_URL) ? "cloud" : "local";
 
