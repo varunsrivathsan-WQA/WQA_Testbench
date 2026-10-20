@@ -1,4 +1,4 @@
-import type { Drop, Template } from "./model";
+import { purgeAt, type Drop, type Template } from "./model";
 
 /** What the browser and the API get back about a drop. Never includes the password hash or file refs. */
 export function publicDrop(d: Drop, origin: string) {
@@ -14,6 +14,8 @@ export function publicDrop(d: Drop, origin: string) {
     createdAt: new Date(d.createdAt).toISOString(),
     updatedAt: new Date(d.updatedAt).toISOString(),
     expiresAt: new Date(d.expiresAt).toISOString(),
+    endedAt: d.endedAt ? new Date(d.endedAt).toISOString() : null,
+    responsesDeleteOn: d.status === "ended" && !d.responsesDeletedAt ? new Date(purgeAt(d)).toISOString() : null,
     version: d.version,
     passwordProtected: !!d.passwordHash,
     visibility: d.visibility,

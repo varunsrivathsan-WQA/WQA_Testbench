@@ -3,7 +3,7 @@ import { UserError } from "@/lib/config";
 import { json, readJson, route } from "@/lib/http";
 import { contentFrom, pickFields } from "@/lib/inputs";
 import { findDrop } from "@/lib/lookup";
-import { endDrop, removeDrop, Visibility } from "@/lib/model";
+import { deleteResponses, endDrop, removeDrop, Visibility } from "@/lib/model";
 import { updateDropContent, updateDropSettings } from "@/lib/service";
 import { originOf, publicDrop } from "@/lib/views";
 
@@ -27,12 +27,16 @@ export const PUT = route(async (req: Request, ctx: Ctx) => {
   return json({ drop: publicDrop(drop, originOf(req)) });
 });
 
-/** Settings only: { title?, extend?, password?: string | null, visibility? } or { end: true }. */
+/** Settings only: { title?, extend?, password?: string | null, visibility? }, { end: true } or { deleteResponses: true }. */
 export const PATCH = route(async (req: Request, ctx: Ctx) => {
   const user = await apiUser(req);
   const drop = await findDrop((await ctx.params).slug);
-  const b = await readJson<{ title?: string; extend?: string; password?: string | null; visibility?: Visibility; end?: boolean }>(req, 8192);
-  if (b.end) return json({ drop: publicDrop(await endDrop(drop), originOf(req)) });
+  const b = await readJson<{ title?: string; extend?: string; password?: string | null; visibility?: Visibility; end?: boolean; deleteResponses?: boolean }>(req, 8192);
+  if (b.end || b.deleteResponses) {
+    let next = b.end ? await endDrop(drop) : drop;
+    if (b.deleteResponses) next = await deleteResponses(next);
+    return json({ drop: publicDrop(next, originOf(req)) });
+  }
   if (b.password !== undefined && b.password !== null && typeof b.password !== "string") throw new UserError("Password must be text, or null to remove it.");
   return json({ drop: publicDrop(await updateDropSettings(drop, user, b), originOf(req)) });
 });

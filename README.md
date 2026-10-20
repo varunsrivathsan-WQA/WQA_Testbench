@@ -1,6 +1,6 @@
 # WQA Testbench
 
-One Vercel site for sharing short-lived tests and assets with clients. Drop an HTML file, a folder or a ZIP, or start from a template with a JSON file, and get a link like `tests.wearewqa.com/nav-card-sort-k7q2`. The link works without an account, can have a password, and ends on its own. When it ends, the files and every saved response are deleted.
+One Vercel site for sharing short-lived tests and assets with clients. Drop an HTML file, a folder or a ZIP, or start from a template with a JSON file, and get a link like `tests.wearewqa.com/nav-card-sort-k7q2`. The link works without an account, can have a password, and ends on its own. When it ends, the link stops working and the files are deleted straight away; the responses stay on the dashboard for the team to download for 30 days (`RESPONSE_RETENTION_DAYS`), then they're deleted too.
 
 Built against the requirements in *Problem definition: sharing short-lived assets and tests with customers* (20 Oct 2026).
 
@@ -10,7 +10,7 @@ Built against the requirements in *Problem definition: sharing short-lived asset
 | --- | --- | --- |
 | R1 | Share by link, no attachment | Every drop gets a link at the site root |
 | R2 | No account for the recipient | Links open for anyone; the team signs in, visitors never do |
-| R3 | Lifespan set by the publisher, removed automatically | 1 day, 2 days, 1 week or 30 days (configurable). Checked on every request; files and responses are deleted when a drop ends |
+| R3 | Lifespan set by the publisher, removed automatically | 1 day, 2 days, 1 week or 30 days (configurable). Checked on every request. The link and files go when a drop ends; responses stay team-only for 30 days, then go |
 | R4 | Lifespans fit real review windows | `LIFESPANS` env var. Change it once the sharing inventory shows the real range |
 | R5 | Client material not exposed | Random link endings, optional password, `noindex` everywhere, hosted pages run sandboxed (see Security) |
 | R6 | Agents can publish | API with personal tokens: `POST /api/v1/drops`, `PUT` to update. See the API page in the app |
@@ -29,7 +29,7 @@ Not built yet: **R14** (a skill that formats JSON for a template), **R15** (per-
 
 ### Saving responses
 
-Hosted pages can save data. Testbench provides the same storage API the WQA study files already use (`window.claude.use("db")`, with `collection().add/doc().set/update/delete/onSnapshot`, and `use("downloads")`), so files like the card sort and tree test save here with no edits. Responses show on the drop's page and download as CSV or JSON.
+Hosted pages can save data. Testbench provides the same storage API the WQA study files already use (`window.claude.use("db")`, with `collection().add/doc().set/update/delete/onSnapshot`, and `use("downloads")`), so files like the card sort and tree test save here with no edits. Responses show on the drop's page and download as CSV or JSON, including after the drop ends: ended drops are listed under **Ended** with their responses for 30 days. **Delete responses now** on the drop's page removes them sooner, for example when a client asks.
 
 Each drop chooses who sees saved responses *inside the page*:
 
@@ -92,8 +92,8 @@ curl -X POST https://tests.wearewqa.com/api/v1/drops \
 | --- | --- |
 | `POST /api/v1/drops` | Publish. Content is one of `html`, `zip` (base64), `files` (`[{path, content, encoding?}]`), or `templateId` + `data`. Optional `title`, `slug`, `lifespan`, `password`, `visibility` |
 | `PUT /api/v1/drops/<slug>` | New version on the same link. Same content fields; optional `extend`, `title` |
-| `PATCH /api/v1/drops/<slug>` | `{"extend":"7d"}`, `{"password":"…"}`, `{"password":null}`, `{"visibility":"own"}`, `{"end":true}` |
-| `DELETE /api/v1/drops/<slug>` | End and remove |
+| `PATCH /api/v1/drops/<slug>` | `{"extend":"7d"}`, `{"password":"…"}`, `{"password":null}`, `{"visibility":"own"}`, `{"end":true}`, `{"deleteResponses":true}` |
+| `DELETE /api/v1/drops/<slug>` | End, delete responses and remove |
 | `GET /api/v1/drops` | List |
 | `GET /api/drops/<id>/responses?format=csv` | Download responses |
 | `GET /api/templates` | List templates with their required keys and example JSON |

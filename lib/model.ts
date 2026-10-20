@@ -1,6 +1,6 @@
 import { kv } from "./store/kv";
 import { files as fileStore } from "./store/files";
-import { ENDED_RECORD_DAYS, LIMITS, RESERVED_SLUGS, TEMPLATE_ADMINS, UserError } from "./config";
+import { RESPONSE_RETENTION_DAYS, LIMITS, RESERVED_SLUGS, TEMPLATE_ADMINS, UserError } from "./config";
 import { mimeFor, RawFile } from "./package";
 import { randomId } from "./crypto";
 
@@ -19,6 +19,8 @@ export type Drop = {
   expiresAt: number;
   status: "live" | "ended";
   endedAt?: number;
+  /** Set when responses were deleted early with "Delete responses now". */
+  responsesDeletedAt?: number;
   version: number;
   kind: "files" | "template";
   templateId?: string;
@@ -162,23 +164,39 @@ export async function insertDrop(d: Drop) {
   await kv.sadd(K.drops, d.id);
 }
 
-/** Ends a drop: deletes its files and responses, keeps a small record for the inventory. */
+/** When an ended drop's responses (and its record) are deleted. */
+export function purgeAt(d: Drop) {
+  return (d.endedAt || d.expiresAt) + RESPONSE_RETENTION_DAYS * 86_400_000;
+}
+
+/**
+ * Ends a drop: the link stops working and its files are deleted straight away.
+ * Responses stay for the team to download until purgeAt(), then go with the record.
+ */
 export async function endDrop(d: Drop) {
   if (d.status === "ended") return d;
   await deleteFiles(d.files);
-  await kv.del(K.docs(d.id));
-  const ended: Drop = { ...d, status: "ended", endedAt: Date.now(), files: [], data: undefined, passwordHash: undefined };
+  const ended: Drop = { ...d, status: "ended", endedAt: Math.min(Date.now(), d.expiresAt), files: [], data: undefined, passwordHash: undefined };
   await saveDrop(ended);
   return ended;
 }
 
+/** Deletes a drop's responses now, without waiting for the retention period. */
+export async function deleteResponses(d: Drop) {
+  await kv.del(K.docs(d.id));
+  const next: Drop = { ...d, responsesDeletedAt: Date.now() };
+  await saveDrop(next);
+  return next;
+}
+
+/** Ends the drop if needed, deletes its responses and removes it from the list. */
 export async function removeDrop(d: Drop) {
   if (d.status !== "ended") await endDrop(d);
-  await kv.del(K.drop(d.id), K.slug(d.slug));
+  await kv.del(K.docs(d.id), K.drop(d.id), K.slug(d.slug));
   await kv.srem(K.drops, d.id);
 }
 
-/** All drops, newest first. Ends any that have expired and removes old ended records. */
+/** All drops, newest first. Ends any that have expired, and purges ended ones past their retention period. */
 export async function listDrops() {
   const ids = await kv.smembers(K.drops);
   const now = Date.now();
@@ -190,7 +208,7 @@ export async function listDrops() {
       continue;
     }
     if (d.status === "live" && d.expiresAt <= now) d = await endDrop(d);
-    if (d.status === "ended" && (d.endedAt || 0) < now - ENDED_RECORD_DAYS * 86_400_000) {
+    if (d.status === "ended" && purgeAt(d) <= now) {
       await removeDrop(d);
       continue;
     }

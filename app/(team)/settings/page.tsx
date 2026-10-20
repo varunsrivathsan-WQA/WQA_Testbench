@@ -39,7 +39,7 @@ export default async function Settings() {
         <p className="muted">Other calls:</p>
         <div className="terminal">{`GET    /api/v1/drops                  list drops
 GET    /api/v1/drops/<slug>           one drop
-PATCH  /api/v1/drops/<slug>           {"extend":"7d"} {"password":null} {"end":true}
+PATCH  /api/v1/drops/<slug>           {"extend":"7d"} {"password":null} {"end":true} {"deleteResponses":true}
 DELETE /api/v1/drops/<slug>           end and remove
 GET    /api/drops/<id>/responses?format=csv
 GET    /api/templates                 list templates

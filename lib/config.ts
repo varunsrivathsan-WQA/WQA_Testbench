@@ -66,8 +66,12 @@ export const LIMITS = {
   dataBytes: 1024 * 1024,
 };
 
-/** Ended drops keep a small record (no files, no responses) this long, for the inventory. */
-export const ENDED_RECORD_DAYS = 30;
+/**
+ * After a drop ends, its link and files are gone at once, but the team can still
+ * see and download its responses for this many days. Then the responses and the
+ * drop's record are deleted.
+ */
+export const RESPONSE_RETENTION_DAYS = Math.max(1, Math.min(365, Number(env.RESPONSE_RETENTION_DAYS) || 30));
 
 /** An error whose message is safe to show the user. */
 export class UserError extends Error {

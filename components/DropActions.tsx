@@ -7,7 +7,7 @@ import { api } from "./upload-client";
 
 type Opt = { value: string; label: string };
 
-export default function DropActions({ dropId, title, hasPassword, visibility, lifespans, live }: { dropId: string; title: string; hasPassword: boolean; visibility: "shared" | "own"; lifespans: Opt[]; live: boolean }) {
+export default function DropActions({ dropId, title, hasPassword, visibility, lifespans, live, keepDays = 30, responses = 0 }: { dropId: string; title: string; hasPassword: boolean; visibility: "shared" | "own"; lifespans: Opt[]; live: boolean; keepDays?: number; responses?: number }) {
   const router = useRouter();
   const [name, setName] = useState(title);
   const [extend, setExtend] = useState(lifespans[0]?.value || "");
@@ -50,7 +50,7 @@ export default function DropActions({ dropId, title, hasPassword, visibility, li
       <div className="row">
         {confirm === "delete" ? (
           <>
-            <button className="btn btn-danger" onClick={remove} disabled={busy}>Remove the record</button>
+            <button className="btn btn-danger" onClick={remove} disabled={busy}>Remove it and its responses</button>
             <button className="btn btn-link" onClick={() => setConfirm(null)}>Keep it</button>
           </>
         ) : (
@@ -101,16 +101,28 @@ export default function DropActions({ dropId, title, hasPassword, visibility, li
       </div>
 
       <hr className="divider" />
-      <div className="row">
-        {confirm === "end" ? (
-          <>
-            <button className="btn btn-danger" disabled={busy} onClick={() => patch({ end: true }, "Ended.")}>End now and delete responses</button>
-            <button className="btn btn-link" onClick={() => setConfirm(null)}>Keep it live</button>
-          </>
-        ) : (
-          <button className="btn btn-danger" onClick={() => setConfirm("end")}>End this drop now</button>
-        )}
-      </div>
+      {confirm === "end" ? (
+        <div className="stack">
+          <p className="h3">End this drop now?</p>
+          <p className="muted small">
+            The link stops working and the files are deleted straight away. What should happen to the {responses === 1 ? "1 saved response" : `${responses} saved responses`}?
+          </p>
+          <div className="stack">
+            <button className="btn btn-dark" disabled={busy} onClick={() => patch({ end: true }, "Ended. Responses are kept for " + keepDays + " days.")}>
+              End and keep responses for {keepDays} days
+            </button>
+            <button className="btn btn-danger" disabled={busy} onClick={() => patch({ end: true, deleteResponses: true }, "Ended. All data deleted.")}>
+              End and delete all data now
+            </button>
+            <button className="btn btn-link" onClick={() => setConfirm(null)}>Cancel, keep it live</button>
+          </div>
+        </div>
+      ) : (
+        <div className="stack">
+          <button className="btn btn-danger" style={{ alignSelf: "flex-start" }} onClick={() => setConfirm("end")}>End this drop now…</button>
+          <small className="muted">You&apos;ll choose whether to keep the responses for {keepDays} days or delete them.</small>
+        </div>
+      )}
 
       {msg && <p className="small" role="status">{msg}</p>}
       {error && <p className="error" role="alert">{error}</p>}
