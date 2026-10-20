@@ -50,6 +50,7 @@ export default function NewDrop({ templates, lifespans, defaultLifespan, mode, i
     if (!jsonPicked.length) return;
     jsonPicked[0].file.text().then((t) => {
       setJsonText(t);
+      setJsonFromExample(false);
       if (!title) setTitle(jsonPicked[0].path.replace(/\.json$/i, "").replace(/[-_]+/g, " ").replace(/^\w/, (c) => c.toUpperCase()));
     });
   }, [jsonPicked, title]);
@@ -60,11 +61,22 @@ export default function NewDrop({ templates, lifespans, defaultLifespan, mode, i
     setSlugError(r.ok ? null : r.error || "That link isn't available.");
   }
 
+  const [jsonFromExample, setJsonFromExample] = useState(false);
+
   async function loadExample() {
     if (!tpl) return;
     const r = await api<{ template: { example: unknown } }>(`/api/templates/${tpl.id}`);
     setJsonText(JSON.stringify(r.template.example, null, 2));
+    setJsonFromExample(true);
   }
+
+  // Picking a template fills in its example, so there's something to edit straight away.
+  useEffect(() => {
+    if (source !== "template" || !tpl?.hasExample) return;
+    if (jsonText.trim() && !jsonFromExample) return; // keep what the user typed or dropped
+    loadExample().catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [source, templateId]);
 
   const ready =
     !!slug && !slugError && (!usePassword || password.length >= 4) && (source === "files" ? picked.length > 0 : !!tpl && jsonText.trim().length > 1);
@@ -127,17 +139,32 @@ export default function NewDrop({ templates, lifespans, defaultLifespan, mode, i
             </select>
             {tpl?.description && <small>{tpl.description}</small>}
           </label>
-          <DropZone picked={jsonPicked} onPick={setJsonPicked} title="Drop the JSON for this test" accept=".json,application/json" folders={false} />
+          <p className="notice">
+            The template is the test itself. The JSON below is this test&apos;s content, such as the prompt, the cards and the categories.
+            {tpl?.hasExample ? " It starts as the template's example: edit it, or drop your own JSON file to replace it." : " Paste it below or drop a JSON file."}
+          </p>
           <label className="field">
-            <span>JSON</span>
-            <textarea id="json" className="input" value={jsonText} onChange={(e) => setJsonText(e.target.value)} placeholder={tpl?.requiredKeys.length ? `{ "${tpl.requiredKeys[0]}": … }` : "{ … }"} spellCheck={false} />
+            <span>This test&apos;s content (JSON)</span>
+            <textarea
+              id="json"
+              className="input"
+              style={{ minHeight: 260 }}
+              value={jsonText}
+              onChange={(e) => {
+                setJsonText(e.target.value);
+                setJsonFromExample(false);
+              }}
+              placeholder={tpl?.requiredKeys.length ? `{ "${tpl.requiredKeys[0]}": … }` : "{ … }"}
+              spellCheck={false}
+            />
             <small>
               {tpl?.requiredKeys.length ? <>Needs: {tpl.requiredKeys.map((k) => <code key={k}>{k}</code>)} </> : null}
-              {tpl?.hasExample && (
-                <button type="button" className="btn btn-link small" onClick={loadExample}>Start from the example</button>
+              {tpl?.hasExample && !jsonFromExample && (
+                <button type="button" className="btn btn-link small" onClick={loadExample}>Reset to the example</button>
               )}
             </small>
           </label>
+          <DropZone picked={jsonPicked} onPick={setJsonPicked} title="Or drop a JSON file" accept=".json,application/json" folders={false} />
         </div>
       )}
 
